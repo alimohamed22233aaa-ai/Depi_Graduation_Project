@@ -1,0 +1,5 @@
+flask==3.0.3
+gunicorn==22.0.0
+sqlalchemy>=2.0.40
+psycopg2-binary>=2.9.11
+prometheus-flask-exporter==0.23.1
