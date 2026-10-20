@@ -1,0 +1,255 @@
+name: online-boutique
+
+services:
+  frontend:
+    build:
+      context: ./src/frontend
+    image: online-boutique/frontend:local
+    environment:
+      PORT: "8080"
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550
+      CURRENCY_SERVICE_ADDR: currencyservice:7000
+      CART_SERVICE_ADDR: cartservice:7070
+      RECOMMENDATION_SERVICE_ADDR: recommendationservice:8080
+      SHIPPING_SERVICE_ADDR: shippingservice:50051
+      CHECKOUT_SERVICE_ADDR: checkoutservice:5050
+      AD_SERVICE_ADDR: adservice:9555
+      SHOPPING_ASSISTANT_SERVICE_ADDR: unused:80
+    depends_on:
+      productcatalogservice:
+        condition: service_started
+        restart: true
+      currencyservice:
+        condition: service_started
+        restart: true
+      cartservice:
+        condition: service_started
+        restart: true
+      recommendationservice:
+        condition: service_started
+        restart: true
+      shippingservice:
+        condition: service_started
+        restart: true
+      checkoutservice:
+        condition: service_started
+        restart: true
+      adservice:
+        condition: service_started
+        restart: true
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  productcatalogservice:
+    build:
+      context: ./src/productcatalogservice
+    image: online-boutique/productcatalogservice:local
+    environment:
+      PORT: "3550"
+      DISABLE_PROFILER: "1"
+      DISABLE_TRACING: "1"
+    expose:
+      - "3550"
+    restart: unless-stopped
+
+  cartservice:
+    build:
+      context: ./src/cartservice
+    image: online-boutique/cartservice:local
+    environment:
+      REDIS_ADDR: redis-cart:6379
+    depends_on:
+      redis-cart:
+        condition: service_healthy
+        restart: true
+    expose:
+      - "7070"
+    restart: unless-stopped
+
+  checkoutservice:
+    build:
+      context: ./src/checkoutservice
+    image: online-boutique/checkoutservice:local
+    environment:
+      PORT: "5050"
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550
+      SHIPPING_SERVICE_ADDR: shippingservice:50051
+      PAYMENT_SERVICE_ADDR: paymentservice:50051
+      EMAIL_SERVICE_ADDR: emailservice:8080
+      CURRENCY_SERVICE_ADDR: currencyservice:7000
+      CART_SERVICE_ADDR: cartservice:7070
+      ORDERS_SERVICE_ADDR: ordersservice:8080
+      DISABLE_PROFILER: "1"
+    depends_on:
+      productcatalogservice:
+        condition: service_started
+        restart: true
+      shippingservice:
+        condition: service_started
+        restart: true
+      paymentservice:
+        condition: service_started
+        restart: true
+      emailservice:
+        condition: service_started
+        restart: true
+      currencyservice:
+        condition: service_started
+        restart: true
+      cartservice:
+        condition: service_started
+        restart: true
+      ordersservice:
+        condition: service_started
+        restart: true
+    expose:
+      - "5050"
+    restart: unless-stopped
+
+  paymentservice:
+    build:
+      context: ./src/paymentservice
+    image: online-boutique/paymentservice:local
+    environment:
+      PORT: "50051"
+      DISABLE_PROFILER: "1"
+    expose:
+      - "50051"
+    restart: unless-stopped
+
+  shippingservice:
+    build:
+      context: ./src/shippingservice
+    image: online-boutique/shippingservice:local
+    environment:
+      PORT: "50051"
+      DISABLE_PROFILER: "1"
+      DISABLE_TRACING: "1"
+    expose:
+      - "50051"
+    restart: unless-stopped
+
+  emailservice:
+    build:
+      context: ./src/emailservice
+    image: online-boutique/emailservice:local
+    environment:
+      PORT: "8080"
+      DISABLE_PROFILER: "1"
+      DISABLE_TRACING: "1"
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  currencyservice:
+    build:
+      context: ./src/currencyservice
+    image: online-boutique/currencyservice:local
+    environment:
+      PORT: "7000"
+      DISABLE_PROFILER: "1"
+      DISABLE_TRACING: "1"
+    expose:
+      - "7000"
+    restart: unless-stopped
+
+  recommendationservice:
+    build:
+      context: ./src/recommendationservice
+    image: online-boutique/recommendationservice:local
+    environment:
+      PORT: "8080"
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550
+      DISABLE_PROFILER: "1"
+      DISABLE_TRACING: "1"
+    depends_on:
+      productcatalogservice:
+        condition: service_started
+        restart: true
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  adservice:
+    build:
+      context: ./src/adservice
+    image: online-boutique/adservice:local
+    environment:
+      PORT: "9555"
+      DISABLE_STATS: "1"
+      DISABLE_TRACING: "1"
+    expose:
+      - "9555"
+    restart: unless-stopped
+
+  searchservice:
+    build:
+      context: ./src/searchservice
+    image: online-boutique/searchservice:local
+    ports:
+      - "127.0.0.1:8081:8080"
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  ordersservice:
+    build:
+      context: ./src/ordersservice
+    image: online-boutique/ordersservice:local
+    environment:
+      DATABASE_URL: postgresql+psycopg2://orders:orders@postgres:5432/orders
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "127.0.0.1:8082:8080"
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  redis-cart:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  loadgenerator:
+    profiles: ["loadtest"]
+    build:
+      context: ./src/loadgenerator
+    image: online-boutique/loadgenerator:local
+    depends_on:
+      frontend:
+        condition: service_started
+        restart: true
+    environment:
+      FRONTEND_ADDR: frontend:8080
+      USERS: "10"
+      RATE: "1"
+
+volumes:
+  redis-data:
+  postgres-data:
