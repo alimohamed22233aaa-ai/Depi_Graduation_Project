@@ -52,7 +52,7 @@ jobs:
             - name: setup GO
               uses: actions/setup-go@v7
               with:
-                go-version: src/${{ matrix.service }}/go.mod
+                go-version-file: src/${{ matrix.service }}/go.mod
                 cache-dependency-path: src/${{ matrix.service }}/go.sum
 
             - name: install dependencies for GO
