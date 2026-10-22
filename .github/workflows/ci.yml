@@ -60,3 +60,5 @@ jobs:
             - name: run GO test
               run: go test -v -coverprofile=coverage-go.out  ./...                 
 
+            - name: Show Go coverage summary
+              run: go tool cover -func=coverage-go.out    
