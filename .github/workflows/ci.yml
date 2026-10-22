@@ -50,7 +50,7 @@ jobs:
               uses: actions/checkout@v4
              
             - name: setup GO
-              uses: actions/setup-go@v70
+              uses: actions/setup-go@v7
               with:
                 go-version-file: src/${{ matrix.service }}/go.mod
                 cache-dependency-path: src/${{ matrix.service }}/go.sum
