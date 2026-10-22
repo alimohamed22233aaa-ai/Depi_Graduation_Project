@@ -52,7 +52,8 @@ jobs:
             - name: setup GO
               uses: actions/setup-go@v7
               with:
-                go-version: '1.26.0'
+                go-version: src/${{ matrix.service }}/go.mod
+                cache-dependency-path: src/${{ matrix.service }}/go.sum
 
             - name: install dependencies for GO
               run: go mod download
