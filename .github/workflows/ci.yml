@@ -52,11 +52,10 @@ jobs:
             - name: setup GO
               uses: actions/setup-go@v7
               with:
-                go-version: '1.25.0'
+                go-version: '1.26.0'
 
             - name: install dependencies for GO
               run: go mod download
             - name: run GO test
               run: go test -v -coverprofile=coverage-go.out  ./...                 
 
-              
