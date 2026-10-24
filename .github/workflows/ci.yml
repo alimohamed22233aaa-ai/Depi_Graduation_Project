@@ -86,7 +86,22 @@ jobs:
                 "-reports:**/coverage.cobertura.xml" \
                 "-targetdir:coverage-dotnet-report" \
                 "-reporttypes:Html;TextSummary"
-    
+  
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
     Secret_scanning:
         runs-on: ubuntu-latest
         steps:
