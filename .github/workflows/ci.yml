@@ -92,6 +92,8 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4   
+              with:
+                fetch-depth: 0
             - name: Scan for Secrets with Gitleaks
               uses: gitleaks/gitleaks-action@v3
               env:
