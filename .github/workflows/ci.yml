@@ -137,7 +137,50 @@ jobs:
               with:
                 name: coverage-${{ matrix.service }}
                 path: src/${{ matrix.service }}/lcov.info      
-                    
+    java-test-adservice:
+      runs-on: ubuntu-latest
+      defaults:
+        run:
+          working-directory: src/adservice
+      steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+
+          - name: setup java
+            uses: actions/setup-java@v4
+            with:
+                java-version: '21'
+             
+
+          - name: make gradlew executable
+            run: chmod +x gradlew
+
+          - name: build and run tests
+            run: ./gradlew --no-daemon build
+
+          - name: upload test report
+            if: always()
+            uses: actions/upload-artifact@v4
+            with:
+              name: test-report-adservice
+              path: src/adservice/build/reports/tests/test 
+          
+          - name: upload coverage report
+            if: always()
+            uses: actions/upload-artifact@v4
+            with:
+              name: coverage-adservice
+              path: src/adservice/build/reports/jacoco/test           
+                
+
+
+
+
+
+
+
+
+
 
     Secret_scanning:
         runs-on: ubuntu-latest
