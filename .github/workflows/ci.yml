@@ -32,7 +32,11 @@ jobs:
                 pip install -r requirements-dev.txt     
             - name: run python tests
               run: python -m pytest -v --cov=. --cov-report=term-missing --cov-report=xml:python-coverage.xml
-    
+            - name: upload coverage report
+              uses: actions/upload-artifact@v4
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/coverage.xml    
               
     GO-test:
         defaults:
@@ -63,8 +67,17 @@ jobs:
             - name: Show Go coverage summary
               if: always()  
               run: go tool cover -func=coverage-go.out 
-    
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/coverage-go.out     
+
     dotnet-test-cartservice:
+        defaults:
+          run:
+            working-directory: src/cartservice
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -78,7 +91,7 @@ jobs:
             - name: Install reportgenerator
               run: dotnet tool install --global dotnet-reportgenerator-globaltool
             - name: Run tests with coverage
-              run: dotnet test ./src/cartservice/tests --collect:"XPlat Code Coverage"
+              run: dotnet test ./tests --collect:"XPlat Code Coverage"
 
             - name: Generate HTML report
               run: |
@@ -86,22 +99,46 @@ jobs:
                 "-reports:**/coverage.cobertura.xml" \
                 "-targetdir:coverage-dotnet-report" \
                 "-reporttypes:Html;TextSummary"
-  
-                
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-cartservice-dotnet
+                path: src/cartservice/coverage-dotnet-report    
 
 
 
 
+    nodejs-test:
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+        matrix:  
+          service: [currencyservice,paymentservice]
+      defaults:
+        run:
+          working-directory: src/${{matrix.service}}     
+      
+      steps:
+            - name: Checkout
+              uses: actions/checkout@v4 
+            - name: setup nodejs
+              uses: actions/setup-node@v7
+              with:
+   
+                  node-version: '22'
+            - name: install dependencies for nodejs
+              run: npm ci 
+            - name: run tests with coverage
+              run: npm run test:coverage
+            - name: upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/lcov.info      
+                    
 
-
-
-
-
-
-
-
-
-                
     Secret_scanning:
         runs-on: ubuntu-latest
         steps:
