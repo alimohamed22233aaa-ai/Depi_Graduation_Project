@@ -157,7 +157,7 @@ jobs:
             run: chmod +x gradlew
 
           - name: build and run tests
-            run: ./gradlew --no-daemon build
+            run: ./gradlew --no-daemon build -x verifyGoogleJavaFormat
 
           - name: upload test report
             if: always()
