@@ -67,8 +67,17 @@ jobs:
             - name: Show Go coverage summary
               if: always()  
               run: go tool cover -func=coverage-go.out 
-    
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/coverage-go.out     
+
     dotnet-test-cartservice:
+        defaults:
+          run:
+            working-directory: src/cartservice
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -90,6 +99,16 @@ jobs:
                 "-reports:**/coverage.cobertura.xml" \
                 "-targetdir:coverage-dotnet-report" \
                 "-reporttypes:Html;TextSummary"
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-cartservice-dotnet
+                path: src/cartservice/coverage-dotnet-report    
+
+
+
+
     nodejs-test:
       runs-on: ubuntu-latest
       strategy:
@@ -110,21 +129,15 @@ jobs:
                   node-version: '22'
             - name: install dependencies for nodejs
               run: npm ci 
-            - name: run test 
-              run: npm    
+            - name: run tests with coverage
+              run: npm run test:coverage
+            - name: upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/lcov.info      
                     
-
-
-
-
-
-
-
-
-
-
-
-
 
     Secret_scanning:
         runs-on: ubuntu-latest
