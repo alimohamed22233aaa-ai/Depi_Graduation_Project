@@ -3,6 +3,8 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.9'
     id 'idea'
     id 'application'
+    id 'jacoco'
+
 }
 
 repositories {
@@ -103,7 +105,7 @@ task downloadRepos(type: Copy) {
 task adService(type: CreateStartScripts) {
     mainClass.set('hipstershop.AdService')
     applicationName = 'AdService'
-    outputDir = new File(project.buildDir, 'tmp')
+    outputDir = new File(project.buildDir, 'start-scripts')
     classpath = startScripts.classpath
     // @TODO: https://github.com/GoogleCloudPlatform/microservices-demo/issues/2517
     // defaultJvmOpts =
@@ -113,7 +115,7 @@ task adService(type: CreateStartScripts) {
 task adServiceClient(type: CreateStartScripts) {
     mainClass.set('hipstershop.AdServiceClient')
     applicationName = 'AdServiceClient'
-    outputDir = new File(project.buildDir, 'tmp')
+    outputDir = new File(project.buildDir, 'start-scripts')
     classpath = startScripts.classpath
     // @TODO: https://github.com/GoogleCloudPlatform/microservices-demo/issues/2517
     // defaultJvmOpts =
@@ -124,4 +126,16 @@ applicationDistribution.into('bin') {
     from(adService)
     from(adServiceClient)
     fileMode = 0755
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
