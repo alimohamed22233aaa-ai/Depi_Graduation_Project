@@ -32,7 +32,11 @@ jobs:
                 pip install -r requirements-dev.txt     
             - name: run python tests
               run: python -m pytest -v --cov=. --cov-report=term-missing --cov-report=xml:python-coverage.xml
-    
+            - name: upload coverage report
+              uses: actions/upload-artifact@v4
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/coverage.xml    
               
     GO-test:
         defaults:
@@ -86,8 +90,29 @@ jobs:
                 "-reports:**/coverage.cobertura.xml" \
                 "-targetdir:coverage-dotnet-report" \
                 "-reporttypes:Html;TextSummary"
-  
-                
+    nodejs-test:
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+        matrix:  
+          service: [currencyservice,paymentservice]
+      defaults:
+        run:
+          working-directory: src/${{matrix.service}}     
+      
+      steps:
+            - name: Checkout
+              uses: actions/checkout@v4 
+            - name: setup nodejs
+              uses: actions/setup-node@v7
+              with:
+   
+                  node-version: '22'
+            - name: install dependencies for nodejs
+              run: npm ci 
+            - name: run test 
+              run: npm    
+                    
 
 
 
@@ -101,7 +126,6 @@ jobs:
 
 
 
-                
     Secret_scanning:
         runs-on: ubuntu-latest
         steps:
