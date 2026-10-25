@@ -158,13 +158,6 @@ jobs:
 
           - name: build and run tests
             run: ./gradlew --no-daemon build -x verifyGoogleJavaFormat
-
-          - name: upload test report
-            if: always()
-            uses: actions/upload-artifact@v4
-            with:
-              name: test-report-adservice
-              path: src/adservice/build/reports/tests/test 
           
           - name: upload coverage report
             if: always()
@@ -173,16 +166,6 @@ jobs:
               name: coverage-adservice
               path: src/adservice/build/reports/jacoco/test           
                 
-
-
-
-
-
-
-
-
-
-
     Secret_scanning:
         runs-on: ubuntu-latest
         steps:
