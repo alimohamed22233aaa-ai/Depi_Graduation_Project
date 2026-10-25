@@ -91,7 +91,7 @@ jobs:
             - name: Install reportgenerator
               run: dotnet tool install --global dotnet-reportgenerator-globaltool
             - name: Run tests with coverage
-              run: dotnet test ./src/cartservice/tests --collect:"XPlat Code Coverage"
+              run: dotnet test ./tests --collect:"XPlat Code Coverage"
 
             - name: Generate HTML report
               run: |
