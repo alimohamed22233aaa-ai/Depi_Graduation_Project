@@ -160,16 +160,16 @@ jobs:
 
           - name: build and run tests
             run: ./gradlew --no-daemon build  jacocoTestReport  -x verifyGoogleJavaFormat
-          - name: list jacoco files
-            run: find build/reports/jacoco -type f | head -20    
+            
           - name: upload coverage report
             if: always()
             uses: actions/upload-artifact@v4
             with:
               name: coverage-adservice
-              path: src/adservice/build     
+              path: src/adservice/build/reports/jacoco/test
                 
     Secret_scanning:
+        needs: [java-test-adservice,nodejs-test,dotnet-test-cartservice,python-test,GO-test]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -182,7 +182,7 @@ jobs:
                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     sonarqube-test:
-      needs: [java-test-adservice,nodejs-test,dotnet-test-cartservice,python-test,GO-test]
+      needs: [java-test-adservice,nodejs-test,dotnet-test-cartservice,python-test,GO-test,Secret_scanning]
       runs-on: ubuntu-latest
       steps:
         - name:  Checkout
