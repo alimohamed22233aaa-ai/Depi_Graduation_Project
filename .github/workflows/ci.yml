@@ -131,6 +131,8 @@ jobs:
               run: npm ci 
             - name: run tests with coverage
               run: npm run test:coverage
+            - name: fix lcov paths
+              run: sed -i "s|^SF:|SF:src/${{ matrix.service }}/|" lcov.info  
             - name: upload coverage report
               uses: actions/upload-artifact@v4
               if: always()
