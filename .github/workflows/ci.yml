@@ -31,7 +31,7 @@ jobs:
                 pip install -r requirements.txt
                 pip install -r requirements-dev.txt     
             - name: run python tests
-              run: python -m pytest -v --cov=. --cov-report=term-missing --cov-report=xml:python-coverage.xml
+              run: python -m pytest -v --cov=. --cov-report=term-missing --cov-report=xml:coverage-python.xml
             - name: upload coverage report
               uses: actions/upload-artifact@v4
               with:
@@ -178,7 +178,8 @@ jobs:
               env:
                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    sonarqube:
+    sonarqube-test:
+      needs: [java-test-adservice,nodejs-test,dotnet-test-cartservice,python-test,GO-test]
       runs-on: ubuntu-latest
       steps:
         - name:  Checkout
@@ -186,8 +187,18 @@ jobs:
           with:
         
             fetch-depth: 0
+
+
+        - name: Download all coverage artifacts
+          uses: actions/download-artifact@v4
+          with:
+            pattern: coverage-*
+            path: coverage-reports
+    
+
+
         - name: SonarQube Scan
-          uses: SonarSource/sonarqube-scan-action@<action version or sha1> 
+          uses: SonarSource/sonarqube-scan-action@v6 
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
              
