@@ -160,7 +160,8 @@ jobs:
 
           - name: build and run tests
             run: ./gradlew --no-daemon build  jacocoTestReport  -x verifyGoogleJavaFormat
-          
+          - name: list jacoco files
+            run: find build/reports/jacoco -type f | head -20    
           - name: upload coverage report
             if: always()
             uses: actions/upload-artifact@v4
