@@ -159,7 +159,7 @@ jobs:
             run: chmod +x gradlew
 
           - name: build and run tests
-            run: ./gradlew --no-daemon build -x verifyGoogleJavaFormat
+            run: ./gradlew --no-daemon build  jacocoTestReport  -x verifyGoogleJavaFormat
           
           - name: upload coverage report
             if: always()
