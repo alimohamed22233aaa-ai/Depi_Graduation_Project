@@ -238,10 +238,18 @@ jobs:
         uses: actions/checkout@v4  
       - name: Set image name
         run: echo "IMAGE=${{ vars.ECR_REPO_URL }}:${{ matrix.service }}-${GITHUB_SHA::7}" >> "$GITHUB_ENV" 
+
+      - name: Debug OIDC claims
+        run: |
+          echo "Role ARN set? -> ${{ vars.AWS_ROLE_ARN != '' }}"
+          echo "Region: ${{ vars.AWS_REGION }}"
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
+          echo "$TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, aud, repository}'  
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::768580175958:role/github-ecr-push
           aws-region: ${{ vars.AWS_REGION }}
       - name: Login to Amazon ECR
         
