@@ -259,7 +259,8 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL'
-
+          scanners: 'vuln'
+          format: table
       - name: Push image to ecr
         run: docker push "$IMAGE"
            
