@@ -5,8 +5,6 @@
 .kubernetes-manifests-*/
 .project
 .skaffold-*.yaml
-.terraform.lock.hcl
-.terraform/*
 .venv/
 .vs/
 .vscode/
@@ -15,8 +13,6 @@
 *.iws
 *.pyc
 *.swp
-*.tfstate*
-*.tfvars
 *~
 bin/
 build/
@@ -27,3 +23,15 @@ pkg/
 release/wi-kubernetes-manifests.yaml
 vendor/
 gha-creds-*.json
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
