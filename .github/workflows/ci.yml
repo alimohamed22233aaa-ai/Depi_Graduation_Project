@@ -168,18 +168,7 @@ jobs:
               name: coverage-adservice
               path: src/adservice/build/reports/jacoco/test
                 
-    Secret_scanning:
-        needs: [sonarqube-test]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4   
-              with:
-                fetch-depth: 0
-            - name: Scan for Secrets with Gitleaks
-              uses: gitleaks/gitleaks-action@v3
-              env:
-                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
 
     sonarqube-test:
       needs: [java-test-adservice,nodejs-test,python-test,GO-test]
@@ -217,3 +206,59 @@ jobs:
             uses: gitleaks/gitleaks-action@v3
             env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    build:
+      name:  Build ${{ matrix.service }}
+      runs-on: ubuntu-latest
+      needs: [secert-scannig]
+      permissions:
+        id-token: write      
+        contents: read
+      if: github.event_name == 'push'
+      strategy:
+        fail-fast: false
+        matrix:
+          service:
+            - adservice
+            - cartservice
+            - checkoutservice
+            - currencyservice
+            - emailservice
+            - frontend
+            - loadgenerator
+            - ordersservice
+            - paymentservice
+            - productcatalogservice
+            - recommendationservice
+            - searchservice
+            - shippingservice  
+
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v4  
+      - name: Set image name
+        run: echo "IMAGE=${{ vars.ECR_REPO_URL }}:${{ matrix.service }}-${GITHUB_SHA::7}" >> "$GITHUB_ENV" 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Login to Amazon ECR
+        
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build image
+        env:
+          IMAGE: ${{ env.IMAGE }}
+        run: docker build -t "$IMAGE" src/${{ matrix.service }} 
+        
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push image to ecr
+        run: docker push "$IMAGE"
+           
