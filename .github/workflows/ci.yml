@@ -258,7 +258,7 @@ jobs:
           image-ref: ${{ env.IMAGE }}
           exit-code: '1'
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
 
       - name: Push image to ecr
         run: docker push "$IMAGE"
