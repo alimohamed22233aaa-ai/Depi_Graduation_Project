@@ -210,7 +210,7 @@ jobs:
     build:
       name:  Build ${{ matrix.service }}
       runs-on: ubuntu-latest
-      
+      needs: [secert-scannig]
       permissions:
         id-token: write      
         contents: read
