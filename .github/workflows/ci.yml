@@ -169,7 +169,7 @@ jobs:
               path: src/adservice/build/reports/jacoco/test
                 
     Secret_scanning:
-        needs: [java-test-adservice,nodejs-test,dotnet-test-cartservice,python-test,GO-test]
+        needs: [sonarqube-test]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -182,7 +182,7 @@ jobs:
                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     sonarqube-test:
-      needs: [java-test-adservice,nodejs-test,dotnet-test-cartservice,python-test,GO-test,Secret_scanning]
+      needs: [java-test-adservice,nodejs-test,python-test,GO-test]
       runs-on: ubuntu-latest
       steps:
         - name:  Checkout
@@ -204,6 +204,16 @@ jobs:
           uses: SonarSource/sonarqube-scan-action@v6 
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-             
-    
 
+    secert-scannig:   
+      needs: [sonarqube-test]
+      runs-on: ubuntu-latest
+      steps:
+          - name: Checkout
+            uses: actions/checkout@v4   
+            with:
+              fetch-depth: 0
+          - name: Scan for Secrets with Gitleaks
+            uses: gitleaks/gitleaks-action@v3
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
