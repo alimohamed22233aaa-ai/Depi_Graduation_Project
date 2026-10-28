@@ -8,6 +8,7 @@ on:
             - main        
 jobs:
     python-test:
+        name: ${{ matrix.service }} unit-test
         defaults:
           run:
             working-directory: src/${{matrix.service}}
@@ -39,6 +40,7 @@ jobs:
                 path: src/${{ matrix.service }}/coverage-python.xml    
               
     GO-test:
+        name: ${{ matrix.service }} unit-test
         defaults:
           run:
             working-directory: src/${{matrix.service}}
@@ -74,8 +76,8 @@ jobs:
                 name: coverage-${{ matrix.service }}
                 path: src/${{ matrix.service }}/coverage-go.out     
 
-    test-sonar-cartservice:
-      name: ".NET Test + Sonar (cartservice)"
+    dotnet-test-sonar:
+      name: cartservice unit-test & sonar
       defaults:
         run:
           working-directory: src/cartservice
@@ -117,6 +119,7 @@ jobs:
 
 
     nodejs-test:
+      name: ${{ matrix.service }} unit-test
       runs-on: ubuntu-latest
       strategy:
         fail-fast: false
@@ -147,6 +150,7 @@ jobs:
                 name: coverage-${{ matrix.service }}
                 path: src/${{ matrix.service }}/lcov.info      
     java-test-adservice:
+      name: adservice unit-test
       runs-on: ubuntu-latest
       defaults:
         run:
@@ -202,7 +206,7 @@ jobs:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     secert-scannig:   
-      needs: [sonarqube-test,test-sonar-cartservice]
+      needs: [sonarqube-test,dotnet-test-sonar]
       runs-on: ubuntu-latest
       steps:
           - name: Checkout
@@ -217,7 +221,7 @@ jobs:
     build:
       name:  Build ${{ matrix.service }} image
       runs-on: ubuntu-latest
-      needs: [secert-scannig,test-sonar-cartservice]
+      needs: [secert-scannig,dotnet-test-sonar]
       permissions:
         id-token: write      
         contents: read
