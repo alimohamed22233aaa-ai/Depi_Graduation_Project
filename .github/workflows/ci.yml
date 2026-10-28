@@ -74,7 +74,8 @@ jobs:
                 name: coverage-${{ matrix.service }}
                 path: src/${{ matrix.service }}/coverage-go.out     
 
-    dotnet-test-cartservice:
+    test-sonar-cartservice:
+      name: ".NET Test + Sonar (cartservice)"
       defaults:
         run:
           working-directory: src/cartservice
