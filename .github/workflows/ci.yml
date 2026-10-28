@@ -100,7 +100,7 @@ jobs:
               /o:"alimohamed22233aaa-ai" \
               /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
               /d:sonar.host.url="https://sonarcloud.io" \
-              /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+              /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"\
               /d:sonar.coverage.exclusions="**/SpannerCartStore.cs,**/AlloyDBCartStore.cs,**/Program.cs"
 
         - name: Run tests with coverage      
@@ -265,7 +265,7 @@ jobs:
         - name: Build image
           env:
             IMAGE: ${{ env.IMAGE }}
-          run: docker build --pull -t "$IMAGE" src/${{ matrix.service }} 
+          run: docker build  -t "$IMAGE" src/${{ matrix.service }} 
         
         - name: Trivy os scan 
           uses: aquasecurity/trivy-action@v0.36.0
@@ -277,7 +277,7 @@ jobs:
             severity: 'CRITICAL'
             ignore-unfixed: true
             exit-code: '1'
-            # trivyignores: .trivyignore
+            trivyignores: .trivyignore
         - name: Push image to ecr
           run: docker push "$IMAGE"
            
