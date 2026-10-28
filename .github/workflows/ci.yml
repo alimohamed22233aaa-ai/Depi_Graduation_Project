@@ -264,7 +264,7 @@ jobs:
         - name: Build image
           env:
             IMAGE: ${{ env.IMAGE }}
-          run: docker build -t "$IMAGE" src/${{ matrix.service }} 
+          run: docker build -t --pull "$IMAGE" src/${{ matrix.service }} 
         
         - name: Trivy os scan 
           uses: aquasecurity/trivy-action@v0.36.0
@@ -276,7 +276,7 @@ jobs:
             severity: 'CRITICAL'
             ignore-unfixed: true
             exit-code: '1'
-            trivyignores: .trivyignore
+            # trivyignores: .trivyignore
         - name: Push image to ecr
           run: docker push "$IMAGE"
            
