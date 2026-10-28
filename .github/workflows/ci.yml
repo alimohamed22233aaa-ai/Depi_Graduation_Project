@@ -256,11 +256,12 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL'
+          format: 'table'
           scanners: 'vuln'
-          format: table
+          vuln-type: 'os'
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
       - name: Push image to ecr
         run: docker push "$IMAGE"
            
