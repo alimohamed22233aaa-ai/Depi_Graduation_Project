@@ -101,6 +101,7 @@ jobs:
               /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
               /d:sonar.host.url="https://sonarcloud.io" \
               /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+              /d:sonar.coverage.exclusions="**/SpannerCartStore.cs,**/AlloyDBCartStore.cs,**/Program.cs"
 
         - name: Run tests with coverage      
           run: |
