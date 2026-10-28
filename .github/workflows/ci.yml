@@ -264,7 +264,7 @@ jobs:
         - name: Build image
           env:
             IMAGE: ${{ env.IMAGE }}
-          run: docker build -t --pull "$IMAGE" src/${{ matrix.service }} 
+          run: docker build --pull -t "$IMAGE" src/${{ matrix.service }} 
         
         - name: Trivy os scan 
           uses: aquasecurity/trivy-action@v0.36.0
