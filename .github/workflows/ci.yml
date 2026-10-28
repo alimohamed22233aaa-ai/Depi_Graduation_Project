@@ -262,6 +262,7 @@ jobs:
           severity: 'CRITICAL'
           ignore-unfixed: true
           exit-code: '1'
+          trivyignores: .trivyignore
       - name: Push image to ecr
         run: docker push "$IMAGE"
            
