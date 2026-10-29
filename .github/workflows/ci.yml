@@ -218,8 +218,8 @@ jobs:
             env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    build:
-      name:  Build ${{ matrix.service }} image
+    build-scan-push:
+      name:  ${{ matrix.service }} image build, scan and push
       runs-on: ubuntu-latest
       needs: [secert-scannig,dotnet-test-sonar]
       permissions:
