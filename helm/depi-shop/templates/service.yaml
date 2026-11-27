@@ -1,0 +1,23 @@
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "depi.labels" (dict "name" $name "root" $) | nindent 4 }}
+  {{- if and (eq $.Values.ingress.className "alb") (eq $svc.probe.type "http") }}
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: {{ default "/" $svc.probe.path | quote }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $name }}
+  ports:
+    - name: {{ if eq $svc.probe.type "grpc" }}grpc{{ else }}http{{ end }}
+      port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+{{- end }}
+{{- end }}

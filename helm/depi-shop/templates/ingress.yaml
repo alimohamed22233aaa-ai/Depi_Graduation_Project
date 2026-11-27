@@ -1,0 +1,50 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: depi-shop
+  labels:
+    app.kubernetes.io/part-of: depi-shop
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - {{ if .Values.ingress.host }}host: {{ .Values.ingress.host | quote }}{{ end }}
+      http:
+        paths:
+          {{- if .Values.services.searchservice.enabled }}
+          - path: /api/search
+            pathType: Prefix
+            backend:
+              service:
+                name: searchservice
+                port:
+                  number: {{ .Values.services.searchservice.port }}
+          - path: /search
+            pathType: Prefix
+            backend:
+              service:
+                name: searchservice
+                port:
+                  number: {{ .Values.services.searchservice.port }}
+          {{- end }}
+          {{- if .Values.services.ordersservice.enabled }}
+          - path: /api/orders
+            pathType: Prefix
+            backend:
+              service:
+                name: ordersservice
+                port:
+                  number: {{ .Values.services.ordersservice.port }}
+          {{- end }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: {{ .Values.services.frontend.port }}
+{{- end }}

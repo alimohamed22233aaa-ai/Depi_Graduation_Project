@@ -1,0 +1,78 @@
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.enabled }}
+{{- $useHpa := and $.Values.autoscaling.enabled $svc.hpa }}
+{{- $delay := default 5 $svc.probe.initialDelaySeconds | int }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "depi.labels" (dict "name" $name "root" $) | nindent 4 }}
+spec:
+  {{- if not $useHpa }}
+  replicas: {{ default 1 $svc.replicas }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+      {{- with $svc.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: {{ $name }}
+          image: {{ include "depi.image" (dict "root" $ "name" $name "svc" $svc) | quote }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $svc.port }}
+          {{- if or $svc.env $svc.usesOrdersDb $svc.usesRedis }}
+          env:
+            {{- range $k, $v := $svc.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+            {{- if $svc.usesRedis }}
+            - name: REDIS_ADDR
+              value: {{ include "depi.redisAddr" $ | quote }}
+            {{- end }}
+            {{- if $svc.usesOrdersDb }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "depi.ordersSecretName" $ }}
+                  key: DATABASE_URL
+            {{- end }}
+          {{- end }}
+          readinessProbe:
+            {{- include "depi.probeHandler" (dict "type" $svc.probe.type "path" $svc.probe.path "port" $svc.port) | nindent 12 }}
+            initialDelaySeconds: {{ $delay }}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            {{- include "depi.probeHandler" (dict "type" (default $svc.probe.type $svc.livenessType) "path" $svc.probe.path "port" $svc.port) | nindent 12 }}
+            initialDelaySeconds: {{ add 15 $delay }}
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml (default $.Values.defaultResources $svc.resources) | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+{{- end }}
+{{- end }}
