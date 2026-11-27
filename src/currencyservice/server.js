@@ -195,4 +195,9 @@ function main () {
    );
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { convert, getSupportedCurrencies, check, _carry };
+

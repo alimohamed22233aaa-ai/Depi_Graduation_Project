@@ -1,0 +1,288 @@
+name: CI Pipeline
+on: 
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main        
+jobs:
+    python-test:
+        name: ${{ matrix.service }} unit-test
+        defaults:
+          run:
+            working-directory: src/${{matrix.service}}
+        
+        
+        strategy:
+          fail-fast: false
+          matrix:
+            service: [searchservice, ordersservice,emailservice,recommendationservice]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4    
+            
+            - name: setup python
+              uses: actions/setup-python@v7
+              with:
+                python-version: '3.12'
+            - name: install dependencies for python 
+              run: |
+                pip install -r requirements.txt
+                pip install -r requirements-dev.txt     
+            - name: run python tests
+              run: python -m pytest -v --cov=. --cov-report=term-missing --cov-report=xml:coverage-python.xml
+            - name: upload coverage report
+              uses: actions/upload-artifact@v4
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/coverage-python.xml    
+              
+    GO-test:
+        name: ${{ matrix.service }} unit-test
+        defaults:
+          run:
+            working-directory: src/${{matrix.service}}
+        
+        
+        strategy:
+          fail-fast: false
+          matrix:
+            service: [frontend,checkoutservice,productcatalogservice,shippingservice]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+             
+            - name: setup GO
+              uses: actions/setup-go@v7
+              with:
+                go-version-file: src/${{ matrix.service }}/go.mod
+                cache-dependency-path: src/${{ matrix.service }}/go.sum
+
+            - name: install dependencies for GO
+              run: go mod download
+            - name: run GO test
+              run: go test -v -coverprofile=coverage-go.out  ./...                 
+
+            - name: Show Go coverage summary
+              if: always()  
+              run: go tool cover -func=coverage-go.out 
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/coverage-go.out     
+
+    dotnet-test-sonar:
+      name: cartservice unit-test & sonar
+      defaults:
+        run:
+          working-directory: src/cartservice
+      runs-on: ubuntu-latest
+      steps:
+       
+        - name:  Checkout 
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+        - name: Setup .NET     
+          uses: actions/setup-dotnet@v6
+          with:
+            dotnet-version: '10.0.x'
+        - name: Install SonarScanner    
+          run: dotnet tool install --global dotnet-sonarscanner
+
+        - name: SonarQube begin
+          
+          run: |
+            dotnet sonarscanner begin \
+              /k:"alimohamed22233aaa-ai_cartservice" \
+              /o:"alimohamed22233aaa-ai" \
+              /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+              /d:sonar.host.url="https://sonarcloud.io" \
+              /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"\
+              /d:sonar.coverage.exclusions="**/SpannerCartStore.cs,**/AlloyDBCartStore.cs,**/Program.cs"
+
+        - name: Run tests with coverage      
+          run: |
+            dotnet test ./tests \
+              --collect:"XPlat Code Coverage" \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+        - name: SonarQube end
+          
+          run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"            
+
+
+
+    nodejs-test:
+      name: ${{ matrix.service }} unit-test
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+        matrix:  
+          service: [currencyservice,paymentservice]
+      defaults:
+        run:
+          working-directory: src/${{matrix.service}}     
+      
+      steps:
+            - name: Checkout
+              uses: actions/checkout@v4 
+            - name: setup nodejs
+              uses: actions/setup-node@v7
+              with:
+   
+                  node-version: '22'
+            - name: install dependencies for nodejs
+              run: npm ci 
+            - name: run tests with coverage
+              run: npm run test:coverage
+            - name: fix lcov paths
+              run: sed -i "s|^SF:|SF:src/${{ matrix.service }}/|" lcov.info  
+            - name: upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: coverage-${{ matrix.service }}
+                path: src/${{ matrix.service }}/lcov.info      
+    java-test-adservice:
+      name: adservice unit-test
+      runs-on: ubuntu-latest
+      defaults:
+        run:
+          working-directory: src/adservice
+      steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+
+          - name: setup java
+            uses: actions/setup-java@v4
+            with:
+              java-version: '21'
+              distribution: temurin
+             
+
+          - name: make gradlew executable
+            run: chmod +x gradlew
+
+          - name: build and run tests
+            run: ./gradlew --no-daemon build  jacocoTestReport  -x verifyGoogleJavaFormat
+            
+          - name: upload coverage report
+            if: always()
+            uses: actions/upload-artifact@v4
+            with:
+              name: coverage-adservice
+              path: src/adservice/build/reports/jacoco/test
+                
+    
+
+    sonarqube-test:
+      needs: [java-test-adservice,nodejs-test,python-test,GO-test]
+      runs-on: ubuntu-latest
+      steps:
+        - name:  Checkout
+          uses: actions/checkout@v7
+          with:
+        
+            fetch-depth: 0
+
+
+        - name: Download all coverage artifacts
+          uses: actions/download-artifact@v4
+          with:
+            pattern: coverage-*
+            path: coverage-reports
+    
+
+
+        - name: SonarQube Scan
+          uses: SonarSource/sonarqube-scan-action@v6 
+          env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    secert-scannig:   
+      needs: [sonarqube-test,dotnet-test-sonar]
+      runs-on: ubuntu-latest
+      steps:
+          - name: Checkout
+            uses: actions/checkout@v4   
+            with:
+              fetch-depth: 0
+          - name: Scan for Secrets with Gitleaks
+            uses: gitleaks/gitleaks-action@v3
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    build-scan-push:
+      name:  ${{ matrix.service }} image build, scan and push
+      runs-on: ubuntu-latest
+      needs: [secert-scannig,dotnet-test-sonar]
+      permissions:
+        id-token: write      
+        contents: read
+      if: github.event_name == 'push'
+      strategy:
+        fail-fast: false
+        matrix:
+          service:
+            - adservice
+            - cartservice
+            - checkoutservice
+            - currencyservice
+            - emailservice
+            - frontend
+            - loadgenerator
+            - ordersservice
+            - paymentservice
+            - productcatalogservice
+            - recommendationservice
+            - searchservice
+            - shippingservice  
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        
+        
+        - name: Trivy Dockerfile scan
+          uses: aquasecurity/trivy-action@v0.36.0
+          with:
+            scan-type: 'config'
+            scan-ref: 'src/${{ matrix.service }}'
+            severity: 'CRITICAL,HIGH'
+            exit-code: '0'   
+        - name: Set image name
+          run: echo "IMAGE=${{ vars.ECR_REPO_URL }}:${{ matrix.service }}-${GITHUB_SHA::7}" >> "$GITHUB_ENV" 
+        
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+            aws-region: ${{ vars.AWS_REGION }}
+        - name: Login to Amazon ECR
+        
+          uses: aws-actions/amazon-ecr-login@v2
+        - name: Build image
+          env:
+            IMAGE: ${{ env.IMAGE }}
+          run: docker build  -t "$IMAGE" src/${{ matrix.service }} 
+        
+        - name: Trivy os scan 
+          uses: aquasecurity/trivy-action@v0.36.0
+          with:
+            image-ref: ${{ env.IMAGE }} 
+            format: 'table'
+            scanners: 'vuln'
+            vuln-type: 'os'
+            severity: 'CRITICAL'
+            ignore-unfixed: true
+            exit-code: '1'
+            trivyignores: .trivyignore
+        - name: Push image to ecr
+          run: docker push "$IMAGE"
+           
