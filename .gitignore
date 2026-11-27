@@ -1,37 +1,94 @@
-.DS_Store
-.eclipse.buildship.core.prefs
-.gradle/
-.idea/
-.kubernetes-manifests-*/
-.project
-.skaffold-*.yaml
-.venv/
-.vs/
-.vscode/
-*.iml
-*.ipr
-*.iws
-*.pyc
-*.swp
-*~
-bin/
-build/
-Dockerfile.pip
-node_modules/
-obj/
-pkg/
-release/wi-kubernetes-manifests.yaml
-vendor/
-gha-creds-*.json
-
+# ==============================
 # Terraform
+# ==============================
 **/.terraform/*
 *.tfstate
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+*.tfplan
+
+# Terraform crash logs
 crash.log
+crash.*.log
+
+# Terraform override files
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Local Terraform backups
+terraform-state-backup.json
+
+# IMPORTANT: Keep .terraform.lock.hcl tracked!
+
+
+# ==============================
+# Secrets and environment files
+# ==============================
+.env
+.env.*
+!.env.example
+gha-creds-*.json
+
+
+# ==============================
+# Python
+# ==============================
+.venv/
+__pycache__/
+*.pyc
+
+
+# ==============================
+# Kubernetes / Skaffold
+# ==============================
+.kubernetes-manifests-*/
+.skaffold-*.yaml
+
+
+# ==============================
+# Java / Gradle
+# ==============================
+.gradle/
+.eclipse.buildship.core.prefs
+*.iml
+*.ipr
+*.iws
+
+
+# ==============================
+# IDE
+# ==============================
+.idea/
+.vscode/
+.vs/
+.project
+
+
+# ==============================
+# Node.js
+# ==============================
+node_modules/
+
+
+# ==============================
+# Build artifacts
+# ==============================
+bin/
+build/
+obj/
+pkg/
+release/wi-kubernetes-manifests.yaml
+vendor/
+Dockerfile.pip
+
+
+# ==============================
+# Temporary files
+# ==============================
+*.swp
+*~
+.DS_Store
+Thumbs.db
